@@ -27,11 +27,6 @@ def getFaceBox(net, frame, conf_threshold=0.7):
 
 parser = argparse.ArgumentParser(description='Use this script to run age and gender recognition using OpenCV.')
 parser.add_argument('--input', help='Path to input image or video file. Skip this argument to capture frames from a camera.')
-parser.add_argument("--device", default="cpu", help="Device to inference on")
-
-args = parser.parse_args()
-
-
 args = parser.parse_args()
 
 faceProto = "opencv_face_detector.pbtxt"
@@ -52,29 +47,14 @@ ageNet = cv.dnn.readNet(ageModel, ageProto)
 genderNet = cv.dnn.readNet(genderModel, genderProto)
 faceNet = cv.dnn.readNet(faceModel, faceProto)
 
-
-if args.device == "cpu":
-    ageNet.setPreferableBackend(cv.dnn.DNN_TARGET_CPU)
-
-    genderNet.setPreferableBackend(cv.dnn.DNN_TARGET_CPU)
-    
-    faceNet.setPreferableBackend(cv.dnn.DNN_TARGET_CPU)
-
-    print("Using CPU device")
-elif args.device == "gpu":
-    ageNet.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
-    ageNet.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
-
-    genderNet.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
-    genderNet.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
-
-    genderNet.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
-    genderNet.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
-    print("Using GPU device")
+ageNet.setPreferableBackend(cv.dnn.DNN_TARGET_MYRIAD)
+genderNet.setPreferableBackend(cv.dnn.DNN_TARGET_MYRIAD)
+faceNet.setPreferableBackend(cv.dnn.DNN_TARGET_MYRIAD)
+print("Using MYRIAD device")
 
 
 # Open a video file or an image file or a camera stream
-cap = cv.VideoCapture(args.input if args.input else 0)
+cap = cv.VideoCapture(0)
 padding = 20
 while cv.waitKey(1) < 0:
     # Read frame
@@ -103,15 +83,19 @@ while cv.waitKey(1) < 0:
         ageNet.setInput(blob)
         agePreds = ageNet.forward()
         age = ageList[agePreds[0].argmax()]
-        print("Age Output : {}".format(agePreds))
-        print("Age : {}, conf = {:.3f}".format(age, agePreds[0].max()))
+       # print("Age Output : {}".format(agePreds))
+      #  print("Age : {}, conf = {:.3f}".format(age, agePreds[0].max()))
 
         label = "{},{}".format(gender, age)
         cv.putText(frameFace, label, (bbox[0], bbox[1]-10), cv.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 255), 2, cv.LINE_AA)
         cv.imshow("Age Gender Demo", frameFace)
-        # cv.imwrite("age-gender-out-{}".format(args.input),frameFace)
-    print("time : {:.3f}".format(time.time() - t))
+        if cv.waitKey(1) & 0xFF == ord('q'):
+            break
+  
+cap.release()
+# Destroy all the windows
+cv.destroyAllWindows()
 
 
- 
-# cmake -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_INSTALL_PREFIX=~/opencv_gpu -DINSTALL_PYTHON_EXAMPLES=OFF -DINSTALL_C_EXAMPLES=OFF -DOPENCV_ENABLE_NONFREE=ON -DOPENCV_EXTRA_MODULES_PATH=~/cv2_gpu/opencv_contrib/modules -DPYTHON_EXECUTABLE=~/env/bin/python3 -DBUILD_EXAMPLES=ON -DWITH_CUDA=ON -DWITH_CUDNN=ON -DOPENCV_DNN_CUDA=ON  -DENABLE_FAST_MATH=ON -DCUDA_FAST_MATH=ON  -DWITH_CUBLAS=ON -DCUDA_TOOLKIT_ROOT_DIR=/usr/local/cuda-10.2 -DOpenCL_LIBRARY=/usr/local/cuda-10.2/lib64/libOpenCL.so -DOpenCL_INCLUDE_DIR=/usr/local/cuda-10.2/include/ ..
+
+
