@@ -18,5 +18,5 @@ to download the respective models
 
 ### Python
 ```
-python AgeGender.py --input <input_file>(Leave blank for webcam)
+python AgeGender.py 
 ```
