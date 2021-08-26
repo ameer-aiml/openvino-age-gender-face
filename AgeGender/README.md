@@ -18,5 +18,5 @@ to download the respective models
 
 ### Python
 ```
-python AgeGender.py 
+python3 AgeGender.py 
 ```
